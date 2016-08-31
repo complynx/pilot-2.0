@@ -1,13 +1,16 @@
 # coding=utf-8
-from ..component import Component as Base
+
+from switchables import Switchable, Interface
 
 
-class ExampleComponent(Base):
+class ExampleSwitchable(Switchable):
+    a = None
+
     def __init__(self, previous=None):
         print("I'm __init__")
         print("my class is " + self.__class__.__name__)
         print('my module is ' + self.__class__.__module__)
-        Base.__init__(self, previous)
+        Switchable.__init__(self, previous)
         self.a = "prop test"
         if previous:
             print("previous class was " + previous.__class__.__name__)
@@ -16,19 +19,21 @@ class ExampleComponent(Base):
             print("I'm the first one")
 
     def __switch__(self):
-        Base.__switch__(self)
+        Switchable.__switch__(self)
         print "switch"
 
     def foo(self):
         print("I'm foo()")
         print("my class is " + self.__class__.__name__)
         print('my module is ' + self.__class__.__module__)
+        return self.__class__.__module__ + "." + self.__class__.__name__
 
     def ti(self, *args):
         print("I'm ti(...)")
         print("my class is " + self.__class__.__name__)
         print('my module is ' + self.__class__.__module__)
         print("args len: %d" % len(args))
+        return len(args)
 
     @classmethod
     def ci(cls, *args):
@@ -36,11 +41,13 @@ class ExampleComponent(Base):
         print("i'm for class " + cls.__name__)
         print('my module is ' + cls.__module__)
         print("args len: %d" % len(args))
+        return len(args)
 
     @staticmethod
     def si(*args):
         print("I'm si(...)")
         print("static\nargs len: %d" % len(args))
+        return len(args)
 
     @property
     def prop(self):
@@ -73,3 +80,8 @@ class ExampleComponent(Base):
             return object.__setattr__(self, name, arg)
         except AttributeError:
             pass
+
+
+class ExampleInterface(Interface):
+    def __init__(self):
+        Interface.__init__(self, ExampleSwitchable)
