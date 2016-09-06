@@ -39,3 +39,10 @@ class TestSwitchable(TestCase):
         self.assertEqual(t.smth, None)
         t.smth = 1
         self.assertEqual(t.smth, 1)
+
+    def test_shadows(self):
+        """ test shadowing """
+        t = ExampleInterface()
+
+        self.assertEqual(t.test(), __package__+'.example_class.interface.ExampleInterface')
+        self.assertEqual(t.__getattr__("test")(), __package__+'.example_class.interface.ExampleSwitchable')

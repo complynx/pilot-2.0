@@ -63,6 +63,9 @@ class ExampleSwitchable(Switchable):
         print('my module is ' + self.__class__.__module__)
         self.a = arg
 
+    def test(self):
+        return self.__class__.__module__ + "." + self.__class__.__name__
+
     def __getattr__(self, name):
         print("I'm __getattr__ for name " + name)
         print("my class is " + self.__class__.__name__)
@@ -85,3 +88,6 @@ class ExampleSwitchable(Switchable):
 class ExampleInterface(Interface):
     def __init__(self):
         Interface.__init__(self, ExampleSwitchable)
+
+    def test(self):
+        return self.__class__.__module__ + "." + self.__class__.__name__
