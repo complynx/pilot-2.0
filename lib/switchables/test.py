@@ -12,18 +12,18 @@ class TestSwitchable(TestCase):
     def test_changing(self):
         """ test changing """
         t = ExampleInterface()
-        self.assertEqual(t.foo(), __package__+'.example_class.interface.ExampleSwitchable')
-        t.load_from_module(__package__+'.example_class.example_extended')
-        self.assertEqual(t.foo(), __package__+'.example_class.example_extended.ExampleExtended test')
-        t.switch_to_default_class()
-        self.assertEqual(t.foo(), __package__+'.example_class.interface.ExampleSwitchable')
+        self.assertEqual(t.foo(), __package__ + '.example_class.interface.ExampleSwitchable')
+        t.switchable_load(__package__ + '.example_class.example_extended')
+        self.assertEqual(t.foo(), __package__ + '.example_class.example_extended.ExampleExtended test')
+        t.switchable_default()
+        self.assertEqual(t.foo(), __package__ + '.example_class.interface.ExampleSwitchable')
 
     def test_changing_to_undefined(self):
         """ test changing to undefined """
         t = ExampleInterface()
-        self.assertEqual(t.foo(), __package__+'.example_class.interface.ExampleSwitchable')
-        t.load_from_module('undefined')
-        self.assertEqual(t.foo(), __package__+'.example_class.interface.ExampleSwitchable')
+        self.assertEqual(t.foo(), __package__ + '.example_class.interface.ExampleSwitchable')
+        t.switchable_load('undefined')
+        self.assertEqual(t.foo(), __package__ + '.example_class.interface.ExampleSwitchable')
 
     def test_other_stuff(self):
         """ test other stuff """
@@ -44,5 +44,5 @@ class TestSwitchable(TestCase):
         """ test shadowing """
         t = ExampleInterface()
 
-        self.assertEqual(t.test(), __package__+'.example_class.interface.ExampleInterface')
-        self.assertEqual(t.__getattr__("test")(), __package__+'.example_class.interface.ExampleSwitchable')
+        self.assertEqual(t.test(), __package__ + '.example_class.interface.ExampleInterface')
+        self.assertEqual(t.__getattr__("test")(), __package__ + '.example_class.interface.ExampleSwitchable')
