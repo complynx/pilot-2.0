@@ -1,6 +1,6 @@
 # coding=utf-8
 
-from switchables import Switchable, Interface
+from .. import Switchable, Interface
 
 
 class ExampleSwitchable(Switchable):
@@ -20,7 +20,11 @@ class ExampleSwitchable(Switchable):
 
     def __switch__(self):
         Switchable.__switch__(self)
-        print "switch"
+        print "I'm __switch__"
+
+    def __switched__(self):
+        Switchable.__switched__(self)
+        print "I'm __switched__"
 
     def foo(self):
         print("I'm foo()")

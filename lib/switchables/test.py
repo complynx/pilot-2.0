@@ -15,7 +15,7 @@ class TestSwitchable(TestCase):
         self.assertEqual(t.foo(), __package__ + '.example_class.interface.ExampleSwitchable')
         t.switchable_load(__package__ + '.example_class.example_extended')
         self.assertEqual(t.foo(), __package__ + '.example_class.example_extended.ExampleExtended test')
-        t.switchable_default()
+        t.switchable_to_default()
         self.assertEqual(t.foo(), __package__ + '.example_class.interface.ExampleSwitchable')
 
     def test_changing_to_undefined(self):
