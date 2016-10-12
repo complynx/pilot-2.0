@@ -99,8 +99,8 @@ class Switchable(object):
         """
         pass
 
-    @classmethod
-    def same(cls, obj):
+    @staticmethod
+    def same(obj):
         """
         This method duplicates an object interface and initializes it with default values saving only the class of the
         passed object.
@@ -248,7 +248,7 @@ class Interface(object):
             object.__setattr__(self, "__switchable__component__", newcmp)
             comp.__switched__()
 
-    def __switchable__load_from_module__(self, module):
+    def __switchable__load_from_module__(self, module, skip=0, **_):
         """
         Loads first found class from provided module, that is subclass of abstract.
         Internal.
@@ -259,8 +259,11 @@ class Interface(object):
         for cls_name in dir(module):
             cls = getattr(module, cls_name)
             if issubclass(cls, interface.__switchable__abstract_class__):
-                self.__switch__(cls)
-                return
+                if skip > 0:
+                    skip -= 1
+                else:
+                    self.__switch__(cls)
+                    return
         raise ClassLookupError("Can not find proper class in module «" + module.__name__ + "»")
 
     def switchable_cast(self, other_interface):
@@ -273,7 +276,7 @@ class Interface(object):
         other_cls = object.__getattribute__(other_interface, "__switchable__component__").__class__
         self.__switch__(other_cls)
 
-    def __switchable__import_module_or_file__(self, name, base=None):
+    def __switchable__import_module_or_file__(self, name, base=None, **_):
         """
         Imports file, or module by string.
         Internal.
@@ -319,12 +322,14 @@ class Interface(object):
         ```
         ex.switchable_load('/mnt/net_disk/mymodule.py', 'class1', 'class2', base='myprefix')
         ```
+
+        If you have multiple implementations in one file/module, pass `skip=N` to select N+1'st one.
         """
         for i in args:
             if isinstance(i, str):
                 try:
                     module = self.__switchable__import_module_or_file__(i, **kwargs)
-                    self.__switchable__load_from_module__(module)
+                    self.__switchable__load_from_module__(module, **kwargs)
                     return
                 except ImportError or ClassLookupError:
                     pass
