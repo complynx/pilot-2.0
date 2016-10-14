@@ -3,7 +3,7 @@ import sys
 import os
 import argparse
 import pipes
-from core.common import LoggingContext
+from common.loggers import LoggingContext
 import logging
 
 
