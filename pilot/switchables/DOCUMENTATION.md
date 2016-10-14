@@ -96,10 +96,10 @@ the line will be the same:
 foo.switchable_load('other')
 ```
 But if your other implementation is in `strange_desicion.py`?
-In this case you can state the path with named parameter `base` as
+In this case you can state the path with named parameter `package` as
 follows:
 ```python
-foo.switchable_load('strange_desicion', base='some_other_package')
+foo.switchable_load('strange_desicion', package='some_other_package')
 ```
 In this case, we use an absolute base to our file. But if you don't know
 exactly the nesting of your code, just use a magic python variable
@@ -150,9 +150,9 @@ class MyExtendedImplementation(MyImplementation):
 And `.default` in this case will be exactly `my_plugin_pack.default`.
 
 And as in the case of modules, if you did your file in a different
-scope, just provide it's base in a `base` parameter:
+scope, just provide it's base in a `package` parameter:
 ```python
-foo.switchable_load(that_file_name, base='some_other_package')
+foo.switchable_load(that_file_name, package='some_other_package')
 ```
 
 
@@ -221,7 +221,7 @@ triggered:
 
 1. `Switchable.__switch__(self)`
    Prepares the old class.
-2. `Switchable.__init__(self, previous=None)`
+2. `Switchable.__init__(self, interface, previous=None)`
    Does switching.
 3. `Switchable.__switched__(self)`
    Cleans the old class.
@@ -237,7 +237,7 @@ whatever might be necessary.
 The procedure does not provide the new class because of the procedure
 is meant to be common for all the cases, the switch happens.
 
-#### `__init__(self, previous=None)`
+#### `__init__(self, interface, previous=None)`
 
 This function is initializing the implementation class. At this point,
 it may be that there was a previous class or there haven't been any.

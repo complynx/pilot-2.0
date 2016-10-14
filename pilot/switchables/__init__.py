@@ -34,8 +34,8 @@ class Switchable(object):
     import Switchable, Iterface from switchables
 
     class ExampleClass(Switchable):
-        def __init__(self, previous=None):
-            Switchable.__init__(self, previous)
+        def __init__(self, interface, previous=None):
+            Switchable.__init__(self, interface, previous)
             if previous:
                 ...fetch values from previous...
             else:
@@ -55,8 +55,11 @@ class Switchable(object):
             Interface.__init__(self, ExampleClass)
     ```
 
+    :prop interface: the pointer to the interface class of self
     """
-    def __init__(self, previous=None):
+    interface = None
+
+    def __init__(self, interface, previous=None):
         """
         Initializer abstraction.
 
@@ -65,9 +68,13 @@ class Switchable(object):
 
         This function is designed to either initialize the object with default values or import the previous values
         from the previous class.
+
+        Interface is a pointer to interface class of self.
+
+        :param interface: Interface to self
         :param previous: previous instance or none.
         """
-        pass
+        self.interface = interface
 
     def __switch__(self):
         """
@@ -124,8 +131,8 @@ class Interface(object):
     import Switchable, Iterface from switchables
 
     class ExampleClass(Switchable):
-        def __init__(self, previous=None):
-            Switchable.__init__(self, previous)
+        def __init__(self, interface, previous=None):
+            Switchable.__init__(self, interface, previous)
             if previous:
                 ...fetch values from previous...
             else:
@@ -144,7 +151,6 @@ class Interface(object):
         def __init__(self):
             Interface.__init__(self, ExampleClass)
     ```
-
     """
     __switchable__abstract_class__ = None
     __switchable__default_class__ = None
@@ -182,7 +188,7 @@ class Interface(object):
             interface.__switchable__default_class__ = abstract_class
             self.switchable_set_default_class(default_class)
 
-        comp = interface.__switchable__default_class__()
+        comp = interface.__switchable__default_class__(self)
         object.__setattr__(self, "__switchable__component__", comp)
 
     @classmethod
@@ -244,7 +250,7 @@ class Interface(object):
         comp = object.__getattribute__(self, "__switchable__component__")
         if type(comp) != new_cls:
             comp.__switch__()
-            newcmp = new_cls(comp)
+            newcmp = new_cls(self, comp)
             object.__setattr__(self, "__switchable__component__", newcmp)
             comp.__switched__()
 
@@ -276,25 +282,29 @@ class Interface(object):
         other_cls = object.__getattribute__(other_interface, "__switchable__component__").__class__
         self.__switch__(other_cls)
 
-    def __switchable__import_module_or_file__(self, name, base=None, **_):
+    def __switchable__import_module_or_file__(self, name, package='.', **_):
         """
         Imports file, or module by string.
         Internal.
 
         :param name:
-        :param base:
+        :param package:
         :return:
         """
         interface = self.__class__
+        if package == '.':
+            module = interface.__switchable__abstract_class__.__module__
+            package = sys.modules[module].__package__
         if os.path.isfile(name):
-            if base is None:
-                module = interface.__switchable__abstract_class__.__module__
-                base = sys.modules[module].__package__
-            module_name = base + "." + module_name_from_file(name)
+            module_name = module_name_from_file(name)
+            if package is not None:
+                module_name = package + "." + module_name
             if module_name not in sys.modules:
                 return imp.load_source(module_name, name)
             else:
                 return sys.modules[module_name]
+        if package is not None:
+            return import_module("." + name, package=package)
         return import_module(name)
 
     def switchable_load(self, *args, **kwargs):
@@ -320,8 +330,13 @@ class Interface(object):
         To change prefix in the example above, provide named argument `base` with prefix.
         So, previous example will change to:
         ```
-        ex.switchable_load('/mnt/net_disk/mymodule.py', 'class1', 'class2', base='myprefix')
+        ex.switchable_load('/mnt/net_disk/mymodule.py', 'class1', 'class2', package='myprefix')
         ```
+
+        `package` is interpreted as magic variable `__package__` of every module. The only difference is the case of
+        `package='.'`, that is the default value if package is not provided. In this case '.' expands to the package of
+        the interface abstract class.
+        If `package=None` is passed, the package is assumed to be at the root level.
 
         If you have multiple implementations in one file/module, pass `skip=N` to select N+1'st one.
         """
