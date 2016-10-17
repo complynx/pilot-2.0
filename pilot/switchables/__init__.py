@@ -155,6 +155,7 @@ class Interface(object):
     __switchable__abstract_class__ = None
     __switchable__default_class__ = None
     __switchable__component__ = None
+    __switchable__switch_to__ = None
 
     def __init__(self, default_class, abstract_class=None):
         """
@@ -190,6 +191,10 @@ class Interface(object):
 
         comp = interface.__switchable__default_class__(self)
         object.__setattr__(self, "__switchable__component__", comp)
+        new_cls = object.__getattribute__(self, "__switchable__switch_to__")
+        if new_cls is not None:
+            object.__setattr__(self, "__switchable__switch_to__", None)
+            self.__switch__(new_cls)
 
     @classmethod
     def set_default_class(cls, new_class=None):
@@ -248,11 +253,18 @@ class Interface(object):
             raise InheritanceError("Presented class «" + new_cls.__name__ +
                                    "» is not the subclass of the provided abstract class")
         comp = object.__getattribute__(self, "__switchable__component__")
-        if type(comp) != new_cls:
-            comp.__switch__()
-            newcmp = new_cls(self, comp)
-            object.__setattr__(self, "__switchable__component__", newcmp)
-            comp.__switched__()
+        if comp is not None:
+            while new_cls is not None:
+                if type(comp) != new_cls:
+                    object.__setattr__(self, "__switchable__component__", None)
+                    comp.__switch__()
+                    newcmp = new_cls(self, comp)
+                    object.__setattr__(self, "__switchable__component__", newcmp)
+                    comp.__switched__()
+                new_cls = object.__getattribute__(self, "__switchable__switch_to__")
+                object.__setattr__(self, "__switchable__switch_to__", None)
+        if comp is None:
+            object.__setattr__(self, "__switchable__switch_to__", new_cls)
 
     def __switchable__load_from_module__(self, module, skip=0, **_):
         """

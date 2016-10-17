@@ -1,10 +1,11 @@
-from switchables import Switchable, Interface
+from switchables import Switchable
 import sys
 import os
 import argparse
 import pipes
 from common.loggers import LoggingContext
 import logging
+from node import NodeProcessorInterface
 
 
 class PilotAbstract(Switchable):
@@ -14,6 +15,7 @@ class PilotAbstract(Switchable):
     info = {'user_agent': 'Pilot/2.0'}
     args = None
     log = None
+    node = None
 
     def __init__(self, interface, previous=None):
         Switchable.__init__(self, interface, previous)
@@ -45,12 +47,15 @@ class PilotAbstract(Switchable):
         req_file = os.path.join(self.info['pilot_dir'], "..", "tools", "pip-requires")
         if os.path.isfile(req_file):
             log.info("Printing requirements versions...")
-            with LoggingContext(logging.getLogger(), logging.INFO):  # removes debug messages of pip
+            rootlog = logging.getLogger()
+            with LoggingContext(rootlog, max(logging.INFO, rootlog.getEffectiveLevel())):
+                # removes debug messages of pip
                 try:
                     import pip
                     requirements = pip.req.parse_requirements(req_file, session=False)
                     for req in requirements:
                         log.info("%s (%s)" % (req.name, req.installed_version))
+                    log.info("Requirements end...")
                 except TypeError:
                     log.warn("Outdated version of PIP? Have you set up your environment properly? Skipping module info"
                              "test...")
@@ -78,9 +83,10 @@ class PilotAbstract(Switchable):
 
         self.info['pilot_id'] = self.info['node_name'] + (":%d" % os.getpid())
         self.log = logging.getLogger('pilot')
+        self.node = NodeProcessorInterface()
 
     def copy_previous(self, previous):
-        for i in ['info', 'argv', 'log']:
+        for i in ['info', 'argv', 'log', 'node']:
             setattr(self, i, getattr(previous, i))
 
     def userproxy_file_standard_path(self):
@@ -156,8 +162,8 @@ class PilotAbstract(Switchable):
 
     def run(self):
         self.print_initial_information()
+        self.node.print_info()
 
-
-class PilotInterface(Interface):
-    def __init__(self):
-        Interface.__init__(self, PilotAbstract)
+    def signal_receiver(self, sig, frame):
+        from common.signalling import signals_reverse
+        self.log.warn("received signal " + signals_reverse[sig])

@@ -256,6 +256,38 @@ class. We don't know, how long it will remain in memory before `__die__`
 triggers, thus ew provide our own function.
 For most cases this function is unnecessary and may be omitted.
 
+Nice practice
+-------------
+
+A nice code practice example.
+_(lets consider different abstract and default, you may have only one)_
+Folder structure:
+```
+- myproject
+  |  ...
+  |- mycomponent
+  |  |- __init__.py
+  |  |- abstract.py (may be same as default)
+  |  |- default.py
+  |  |- other.py
+  |  |  ...
+  |- switchables (may be in the lib folder)
+  ...
+```
+And the contents of the `__init__.py`:
+```python
+from abstract import MyComponentAbstract 
+from default import MyComponentDefault
+from switchables import Interface
+
+class MyComponentInterface(Interface):
+    def __init__(self):
+        Interface.__init__(self, MyComponentDefault, MyComponentAbstract)
+```
+Then it will be more clean in later imports, and more convenient in
+terms. `__init__` is, as it has to be, an initializer and a presenter of
+an interface, and other files are the implementations.
+
 
 Common misuses
 ==============
@@ -284,4 +316,9 @@ Switching back won't solve the problem in this situation:
 ```python
 foo.switchable_to_default()
 bar != foo.bar  # still True
+```
+The same is with functions:
+```python
+foo.bar()  # calls implementation->bar
+b = foo.bar  # binds to implementation->bar, not interface->bar
 ```
