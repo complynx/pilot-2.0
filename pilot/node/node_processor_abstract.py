@@ -37,6 +37,9 @@ class NodeProcessorAbstract(Switchable):
         log.info("RAM: %d MB" % self.get_mem())
         log.info("Disk: %d MB" % self.get_disk())
 
+    def can_obtain_job(self):
+        return True
+
     def get_cpu(self):
         pass
 
