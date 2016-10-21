@@ -4,7 +4,7 @@ import logging
 log = logging.getLogger()
 
 
-class JobQueueAbstract(Switchable):
+class JobRequesterAbstract(Switchable):
     pilot = None
     node = None
     communicator = None

@@ -3,13 +3,13 @@ import logging
 log = logging.getLogger()
 
 
-class DefaultJobQueue(abstract.JobQueueAbstract):
+class DefaultJobRequester(abstract.JobRequesterAbstract):
     jobs = []
     max_jobs = 1
 
     def __init__(self, i, p=None):
         global log
-        super(DefaultJobQueue, self).__init__(i, p)
+        super(DefaultJobRequester, self).__init__(i, p)
         log = logging.getLogger('JobQueue')
 
     def set_max_jobs(self, new_max):

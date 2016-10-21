@@ -28,7 +28,7 @@ def module_name_from_file(file_name):
 
 class InterfaceMethod(object):
     """
-    Class to wrap methods if needed to pass somewhere as callbacks
+    Class to wrap methods if needed to pass somewhere as callbacks.
     """
     def __init__(self, interface, name):
         self.interface = weakref.ref(interface)
