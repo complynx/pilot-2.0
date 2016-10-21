@@ -1,8 +1,9 @@
 import signal
 import os
+import inspect
+from signalslot import Signal
 
-sig_catchers = []
-is_set_up = False
+_is_set_up = False
 
 signals_reverse = {}
 
@@ -42,23 +43,26 @@ if os.name == "nt":
     signals_reverse[signal.CTRL_BREAK_EVENT] = 'CTRL_BREAK_EVENT'
 
 
-def signal_receiver(sig, frame):
-    [t(sig, frame) for t in sig_catchers]
+_receiver = Signal()
 
 
 def handler(sig):
-    signal_receiver(sig, None)
+    frame = inspect.currentframe()
+    try:
+        _receiver(sig, frame)
+    finally:
+        del frame
     return 1
 
 
 def signal_all_setup(func=None):
-    global is_set_up, sig_catchers
+    global _is_set_up
 
     if func is not None:
-        sig_catchers.append(func)
+        _receiver.connect(func)
 
-    if not is_set_up:
-        is_set_up = True
+    if not _is_set_up:
+        _is_set_up = True
         if os.name == 'nt':
             set_console_ctrl_handler(handler)
         for i in [
@@ -67,7 +71,7 @@ def signal_all_setup(func=None):
         ]:
             if hasattr(signal, i):
                 try:
-                    signal.signal(getattr(signal, i), signal_receiver)
+                    signal.signal(getattr(signal, i), _receiver.__call__)
                     signals_reverse[getattr(signal, i)] = i
                     # print "set "+i
                 except ValueError:
