@@ -284,9 +284,10 @@ class Interface(object):
                     newcmp = new_cls(self, comp)
                     object.__setattr__(self, "__switchable__component__", newcmp)
                     comp.__switched__()
+                    del comp
                 new_cls = object.__getattribute__(self, "__switchable__switch_to__")
                 object.__setattr__(self, "__switchable__switch_to__", None)
-        if comp is None:
+        else:
             object.__setattr__(self, "__switchable__switch_to__", new_cls)
 
     def __switchable__load_from_module__(self, module, skip=0, **_):

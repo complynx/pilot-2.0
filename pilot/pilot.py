@@ -4,6 +4,7 @@ import argparse
 import pipes
 import logging
 from node import NodeProcessorInterface
+from job_queue import JobQueueInterface
 from common.signalling import signal_all_setup
 from common.signalslot import Signal
 import threading
@@ -26,6 +27,7 @@ class Pilot(threading.Thread):
 
         self.argv = argv
         self.node = NodeProcessorInterface()
+        self.queue = JobQueueInterface()
 
         self.startup_dir = os.path.abspath(os.getcwd())
         self.pilot_dir = os.path.dirname(os.path.abspath(__main__.__file__))
@@ -37,6 +39,7 @@ class Pilot(threading.Thread):
         self.log = logging.getLogger('pilot')
         self.setup_argparser()
         self.setup_arguments()
+        self.queue.setup(self)
         signal_all_setup(self.signal_receiver)
 
     def print_initial_information(self):
@@ -119,13 +122,22 @@ class Pilot(threading.Thread):
                                           help="Disable rucio, just simulate")
 
     def setup_arguments(self):
-        self.args, self.unresolved_arguments = self.argument_parser.parse_known_args(self.argv)
+        self.args, self.unresolved_arguments = self.argument_parser.parse_known_args(self.argv[1:])
+        if len(self.unresolved_arguments):
+            self.log.warn("Found unresolved arguments: " + " ".join(pipes.quote(x) for x in self.unresolved_arguments))
         if self.args.loglevel is not None:
             self.log.setLevel(getattr(logging, self.args.loglevel))
 
     def run(self):
         self.print_initial_information()
         self.node.print_info()
+
+        if self.args.job_description:
+            try:
+                self.queue.load_from_file(self.args.job_description)
+            except Exception as e:
+                self.log.warn("Loading job from file '%s' failed:" % self.args.job_description)
+                self.log.warn(e.message)
         self.ready()
 
     def signal_receiver(self, sig, frame):

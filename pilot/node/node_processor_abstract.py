@@ -3,10 +3,17 @@ import logging
 import socket
 import os
 from common.loggers import LoggingContext
+from common.signalslot import Signal
+from common.async_decorator import async
 
 
 class NodeProcessorAbstract(Switchable):
     name = None
+    has_available_slots = Signal()
+    jobs_running = []
+    max_available_jobs = 1
+    jobs_limit = -1
+    jobs_count = 0
 
     def __init__(self, interface, previous=None):
         Switchable.__init__(self, interface, previous)
@@ -29,6 +36,19 @@ class NodeProcessorAbstract(Switchable):
             interface.switchable_load('node_processor_unix')
             return
 
+    @async
+    def request_slots(self):
+        available = self.max_available_jobs - len(self.jobs_running)
+        if available > 0:
+            self.has_available_slots(available)
+
+    @async
+    def push_job(self, job, queue):
+        import json
+        log = logging.getLogger('node')
+        self.jobs_running.append(job)
+        log.debug("Have jobs to run:\n" + json.dumps(job, indent=4))
+
     def init(self):
         self.setup_name()
 
@@ -39,6 +59,12 @@ class NodeProcessorAbstract(Switchable):
 
     def copy_previous(self, previous):
         self.setup_name()
+        for i in ['jobs_count', 'jobs_limit', 'max_available_jobs', 'jobs_running']:
+            setattr(self, i, getattr(previous, i))
+        for i in dir(previous):
+            val = getattr(previous, i)
+            if isinstance(val, Signal):
+                setattr(self, i, val)
 
     def print_packages(self):
         log = logging.getLogger('node')
@@ -51,6 +77,14 @@ class NodeProcessorAbstract(Switchable):
         for pack in packages:
             log.info("%s (%s)" % (pack.key, pack.version))
 
+    def print_ssl_version(self):
+        log = logging.getLogger('node')
+        try:
+            import ssl
+            log.info("SSL version: " + ssl.OPENSSL_VERSION)
+        except ImportError:
+            log.warn("No SSL support on this machine. If pilot needs direct communication with a server, it failes.")
+
     def print_info(self):
         log = logging.getLogger('node')
         log.info("Node related information.")
@@ -60,9 +94,7 @@ class NodeProcessorAbstract(Switchable):
         log.info("RAM: %d MB" % self.get_mem())
         log.info("Disk: %d MB" % self.get_disk())
         self.print_packages()
-
-    def can_obtain_job(self):
-        return True
+        self.print_ssl_version()
 
     def get_cpu(self):
         pass
