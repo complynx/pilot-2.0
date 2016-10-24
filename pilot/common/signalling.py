@@ -74,6 +74,6 @@ def signal_all_setup(func=None):
                     signal.signal(getattr(signal, i), _receiver.__call__)
                     signals_reverse[getattr(signal, i)] = i
                     # print "set "+i
-                except ValueError:
+                except (ValueError, RuntimeError):
                     # print "error with "+i
                     pass

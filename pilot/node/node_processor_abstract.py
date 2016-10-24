@@ -70,12 +70,17 @@ class NodeProcessorAbstract(Switchable):
         log = logging.getLogger('node')
         rootlog = logging.getLogger()
         log.info("Installed packages:")
-        with LoggingContext(rootlog, max(logging.INFO, rootlog.getEffectiveLevel())):
-            # suppress pip debug messages
-            import pip
-            packages = pip.get_installed_distributions()
-        for pack in packages:
-            log.info("%s (%s)" % (pack.key, pack.version))
+        try:
+            with LoggingContext(rootlog, max(logging.INFO, rootlog.getEffectiveLevel())):
+                # suppress pip debug messages
+                import pip
+                packages = pip.get_installed_distributions()
+            for pack in packages:
+                log.info("%s (%s)" % (pack.key, pack.version))
+        except Exception as e:
+            log.warn("Failed to list installed packages. It may not be the issue, though.")
+            log.warn(e.message)
+            pass
 
     def print_ssl_version(self):
         log = logging.getLogger('node')

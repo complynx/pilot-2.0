@@ -3,7 +3,6 @@ from common.signalslot import Signal
 from common.async_decorator import async
 import urllib2
 import urllib
-import ssl
 import logging
 import json
 from minipilot.job_description_fixer import description_fixer
@@ -13,7 +12,7 @@ log = logging.getLogger('JobserverCommunicator')
 
 
 class JobserverCommunicator(Switchable):
-    pilot = None
+    args = None
     got_new_job = Signal()
     got_job_state = Signal()
     ssl_context = None
@@ -41,19 +40,24 @@ class JobserverCommunicator(Switchable):
             if isinstance(val, Signal):
                 setattr(self, i, val)
 
-        if self.pilot is not None and self.queue_name is None:
-            self.setup(self.pilot, self.job_queue)
+        if self.args is not None and self.queue_name is None:
+            self.setup(self.args, self.job_queue)
 
-    def setup(self, pilot, queue):
+    def setup(self, args, queue):
         global log
         log = logging.getLogger('JobserverCommunicator')
-        self.pilot = pilot
+        self.args = args
         self.job_queue = queue
-        self.ssl_context = ssl.create_default_context(capath=pilot.args.capath, cafile=pilot.args.cacert)
-        self.job_server = '%s:%d' % (pilot.args.jobserver, pilot.args.jobserver_port)
-        self.queue_name = self.pilot.args.queue
-        self.job_tag = self.pilot.args.job_tag
-        queue.has_available_slots.connect(self.get_job)
+        try:
+            import ssl
+            self.ssl_context = ssl.create_default_context(capath=args['capath'], cafile=args['cacert'])
+        except Exception as e:
+            log.warn('SSL communication is impossible due to SSL error:')
+            log.warn(e.message)
+            pass
+        self.job_server = '%s:%d' % (args['job_server'][0], args['job_server'][1])
+        self.queue_name = self.args['queue']
+        self.job_tag = self.args['job_tag']
 
     @async
     def get_job(self, *_):
@@ -62,7 +66,7 @@ class JobserverCommunicator(Switchable):
         try:
             log.info("Trying to get a job from queue %s with tag %s" % (self.queue_name, self.job_tag))
             log.info("Using server %s" % self.job_server)
-            node = self.pilot.node
+            node = self.args['node']
             request = urllib2.Request("https://%s/server/panda/getJob" % self.job_server, urllib.urlencode({
                 'cpu': node.get_cpu(),
                 'mem': node.get_mem(),
@@ -76,7 +80,7 @@ class JobserverCommunicator(Switchable):
             }))
             request.add_header('Accept',
                                'application/json;q=0.9,text/html,application/xhtml+xml,application/xml;q=0.7,*/*;q=0.5')
-            request.add_header('User-Agent', self.pilot.user_agent)
+            request.add_header('User-Agent', self.args['user_agent'])
             try:
                 f = urllib2.urlopen(request, context=self.ssl_context)
                 result = json.loads(f.read())

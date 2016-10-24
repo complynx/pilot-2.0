@@ -5,11 +5,12 @@ import logging
 
 
 class DefaultJobQueue(Switchable):
-    pilot = None
+    args = None
     communicator = None
     jobs_pending = []
     has_pending_jobs = Signal()
     has_available_slots = Signal()
+    start_job = Signal()
 
     def __init__(self, interface, previous=None):
         Switchable.__init__(self, interface, previous)
@@ -38,18 +39,17 @@ class DefaultJobQueue(Switchable):
         for i in self.jobs_pending:
             self.log.debug("Pending job: \n%s" % json.dumps(i, indent=4))
 
-    def setup(self, pilot):
-        self.pilot = pilot
+    def setup(self, args):
+        self.args = args
         self.set_server_communicator()
-        pilot.node.has_available_slots.connect(self.fill_node_slots)
-        self.has_pending_jobs.connect(pilot.node.request_slots)
 
     def fill_node_slots(self, number):
         while number > 0:
             if len(self.jobs_pending) == 0:
                 break
             job = self.jobs_pending.pop()
-            self.pilot.node.push_job(job, self.interface)
+
+            self.start_job(job, self.interface)
             number -= 1
         if number:
             self.has_available_slots(number)
@@ -70,8 +70,9 @@ class DefaultJobQueue(Switchable):
 
     def set_server_communicator(self):
         self.communicator = JobserverCommunicatorInterface()
-        self.communicator.setup(self.pilot, self.interface)
-        self.communicator.got_new_job.connect(self.push_job)
+        self.communicator.setup(self.args, self.interface)
+        self.communicator.got_new_job.connect(self.interface.push_job)
+        self.has_available_slots.connect(self.communicator.get_job)
 
     def has_empty_slots(self):
         return 0

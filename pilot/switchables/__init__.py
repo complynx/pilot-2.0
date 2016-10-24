@@ -7,8 +7,10 @@ import hashlib
 import binascii
 import imp
 import sys
-# import inspect
+import inspect
 import weakref
+import logging  # NOQA: F401 -- if commented debug
+import types
 
 file_module_prefix = "_file_"
 
@@ -416,7 +418,17 @@ class Interface(object):
         :return: property/method from current loaded class
         """
         comp = object.__getattribute__(self, "__switchable__component__")
-        return getattr(comp, name)
+        ret = getattr(comp, name)
+        if inspect.ismethod(ret):
+            # logging.getLogger('switchables').debug('Creating method %s::%s' % (self.__class__.__name__, name))
+
+            def interface_method(interface, *args, **kwargs):
+                # logging.getLogger('switchables').debug('Calling method %s::%s' % (self.__class__.__name__, name))
+                return getattr(object.__getattribute__(interface, "__switchable__component__"), name)(*args, **kwargs)
+
+            interface_method = types.MethodType(interface_method, self)
+            return interface_method
+        return ret
 
     def __setattr__(self, name, arg):
         """

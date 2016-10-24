@@ -39,7 +39,20 @@ class Pilot(threading.Thread):
         self.log = logging.getLogger('pilot')
         self.setup_argparser()
         self.setup_arguments()
-        self.queue.setup(self)
+
+        self.queue.setup({
+            'capath': self.args.capath,
+            'cacert': self.args.cacert,
+            'queue': self.args.queue,
+            'job_server': (self.args.jobserver, self.args.jobserver_port),
+            'panda_server': (self.args.pandaserver, self.args.pandaserver_port),
+            'job_tag': self.args.job_tag,
+            'user_agent': self.user_agent,
+            'node': self.node
+        })
+        self.node.has_available_slots.connect(self.queue.fill_node_slots)
+        self.queue.has_pending_jobs.connect(self.node.request_slots)
+        self.queue.start_job.connect(self.node.push_job)
         signal_all_setup(self.signal_receiver)
 
     def print_initial_information(self):
@@ -138,7 +151,13 @@ class Pilot(threading.Thread):
             except Exception as e:
                 self.log.warn("Loading job from file '%s' failed:" % self.args.job_description)
                 self.log.warn(e.message)
-        self.ready()
+
+        self.ready.connect(self.get_emmitter)
+        self.ready.async()
+
+    def get_emmitter(self):
+        self.log.info("got emmitter:")
+        self.log.info(Signal.emitter())
 
     def signal_receiver(self, sig, frame):
         from common.signalling import signals_reverse
