@@ -6,7 +6,7 @@ import string
 
 class NodeProcessorBasic(node_processor_abstract.NodeProcessorAbstract):
     def __init__(self, interface, previous=None):
-        node_processor_abstract.Switchable.__init__(self, interface, previous)
+        node_processor_abstract.SwitchableWithSignals.__init__(self, interface, previous)
         if previous is None:
             self.init()
         else:

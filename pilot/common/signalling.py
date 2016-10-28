@@ -43,7 +43,7 @@ if os.name == "nt":
     signals_reverse[signal.CTRL_BREAK_EVENT] = 'CTRL_BREAK_EVENT'
 
 
-_receiver = Signal()
+_receiver = Signal(signal)
 
 
 def handler(sig):

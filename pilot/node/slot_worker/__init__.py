@@ -1,10 +1,10 @@
-from default import DefaultJobQueue
 from switchables import Interface
 from common.singleton import Singleton
+from default import SlotWorkerDefault
 
 
-class JobQueueInterface(Interface):
+class SlotWorkerInterface(Interface):
     __metaclass__ = Singleton
 
     def __init__(self):
-        Interface.__init__(self, DefaultJobQueue)
+        Interface.__init__(self, SlotWorkerDefault)

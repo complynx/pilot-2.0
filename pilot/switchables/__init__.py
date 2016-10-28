@@ -254,6 +254,9 @@ class Interface(object):
         if issubclass(new_class, cls.__switchable__abstract_class__):
             cls.__switchable__default_class__ = new_class
 
+    def __repr__(self):
+        return object.__getattribute__(self, "__switchable__component__").__repr__()
+
     def switchable_set_default_class(self, new_class=None):
         """
         The wrapper around `set_default_class` interface method to provide shortcut and default parameter setting.

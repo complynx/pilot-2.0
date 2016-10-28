@@ -1,4 +1,5 @@
 import threading
+from exception_formatter import caught
 
 
 class TimeoutError(RuntimeError):
@@ -10,10 +11,11 @@ class AsyncCall(threading.Thread):
     args = []
     kwargs = {}
 
-    def __init__(self, fnc, callback=None):
+    def __init__(self, fnc, callback=None, daemon=False):
         super(AsyncCall, self).__init__()
         self.Callable = fnc
         self.Callback = callback
+        self.daemon = daemon
 
     def __call__(self, *args, **kwargs):
         self.name = self.Callable.__name__
@@ -30,17 +32,20 @@ class AsyncCall(threading.Thread):
             return self.Result
 
     def run(self):
-        self.Result = self.Callable(*self.args, **self.kwargs)
-        if self.Callback:
-            self.Callback(self.Result)
+        try:
+            self.Result = self.Callable(*self.args, **self.kwargs)
+            if self.Callback:
+                self.Callback(self.Result)
+        except Exception as e:
+            caught(e)
 
 
-def async(fnc=None, callback=None):
+def async(fnc=None, callback=None, daemon=False):
     if fnc is None:
         def add_async_callback(fnc1):
-            return async(fnc1, callback)
+            return async(fnc1, callback, daemon)
         return add_async_callback
     else:
         def async_caller(*args, **kwargs):
-            return AsyncCall(fnc, callback)(*args, **kwargs)
+            return AsyncCall(fnc, callback, daemon)(*args, **kwargs)
         return async_caller

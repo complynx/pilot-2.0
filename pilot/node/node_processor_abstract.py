@@ -1,22 +1,23 @@
-from switchables import Switchable
+from common.switchable_sig import SwitchableWithSignals
 import logging
 import socket
 import os
 from common.loggers import LoggingContext
 from common.signalslot import Signal
 from common.async_decorator import async
+from slot_worker import SlotWorkerInterface
 
 
-class NodeProcessorAbstract(Switchable):
+class NodeProcessorAbstract(SwitchableWithSignals):
     name = None
     has_available_slots = Signal()
-    jobs_running = []
+    reserved_slots = []
     max_available_jobs = 1
-    jobs_limit = -1
+    jobs_limit = 1
     jobs_count = 0
 
     def __init__(self, interface, previous=None):
-        Switchable.__init__(self, interface, previous)
+        SwitchableWithSignals.__init__(self, interface, previous)
         # # it's abstract. Removing this
         # if previous is None:
         #     self.init()
@@ -38,18 +39,33 @@ class NodeProcessorAbstract(Switchable):
 
     @async
     def request_slots(self):
-        available = self.max_available_jobs - len(self.jobs_running)
+        available = self.max_available_jobs - len(self.reserved_slots)
+        if self.jobs_limit >= 0:
+            limit = self.jobs_limit - self.jobs_count
+            available = max(0, min(available, limit))
         if available > 0:
             self.has_available_slots(available)
 
+    test_slots = request_slots
+
+    def slot_finished(self):
+        slot = Signal.emitter()
+        self.reserved_slots.remove(slot)
+        self.test_slots()
+
     @async
     def push_job(self, job, queue):
-        import json
         log = logging.getLogger('node')
-        self.jobs_running.append(job)
-        log.debug("Have jobs to run:\n" + json.dumps(job, indent=4))
+        slot = SlotWorkerInterface()
+        slot.set_job(job)
+        self.reserved_slots.append(slot)
+        slot.empty.connect(self.slot_finished)
+        self.jobs_count += 1
+        slot.run()
+        log.debug("Have jobs to run: %s" % job)
 
     def init(self):
+        super(NodeProcessorAbstract, self).init()
         self.setup_name()
 
     def setup_name(self):
@@ -59,12 +75,9 @@ class NodeProcessorAbstract(Switchable):
 
     def copy_previous(self, previous):
         self.setup_name()
-        for i in ['jobs_count', 'jobs_limit', 'max_available_jobs', 'jobs_running']:
+        super(NodeProcessorAbstract, self).copy_previous(previous)
+        for i in ['jobs_count', 'jobs_limit', 'max_available_jobs', 'reserved_slots']:
             setattr(self, i, getattr(previous, i))
-        for i in dir(previous):
-            val = getattr(previous, i)
-            if isinstance(val, Signal):
-                setattr(self, i, val)
 
     def print_packages(self):
         log = logging.getLogger('node')

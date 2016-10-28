@@ -1,10 +1,11 @@
-from switchables import Switchable
+from common.switchable_sig import SwitchableWithSignals
 from jobserver_communicator import JobserverCommunicatorInterface
 from common.signalslot import Signal
 import logging
+from job_manager import JobManagerInterface
 
 
-class DefaultJobQueue(Switchable):
+class DefaultJobQueue(SwitchableWithSignals):
     args = None
     communicator = None
     jobs_pending = []
@@ -13,12 +14,7 @@ class DefaultJobQueue(Switchable):
     start_job = Signal()
 
     def __init__(self, interface, previous=None):
-        Switchable.__init__(self, interface, previous)
-
-        if previous is None:
-            self.init()
-        else:
-            self.copy_previous(previous)
+        super(DefaultJobQueue, self).__init__(interface, previous)
 
     @property
     def log(self):
@@ -26,18 +22,11 @@ class DefaultJobQueue(Switchable):
 
     def init(self):
         self.has_pending_jobs.connect(self.log_jobs)
-        pass
-
-    def copy_previous(self, previous):
-        for i in dir(previous):
-            val = getattr(previous, i)
-            if isinstance(val, Signal):
-                setattr(self, i, val)
+        super(DefaultJobQueue, self).init()
 
     def log_jobs(self):
-        import json
         for i in self.jobs_pending:
-            self.log.debug("Pending job: \n%s" % json.dumps(i, indent=4))
+            self.log.debug("Pending job: %s" % i)
 
     def setup(self, args):
         self.args = args
@@ -59,11 +48,16 @@ class DefaultJobQueue(Switchable):
 
     def push_job(self, job_desc):
         if self.validate_job(job_desc):
-            self.jobs_pending.append(job_desc)
+            job = JobManagerInterface()
+            job.setup(job_desc, self.interface)
+            self.jobs_pending.append(job)
             self.has_pending_jobs.async()
 
     def validate_job(self, job):
         return True
+
+    def get_queue_config(self, filename=None):
+        return self.communicator.get_queue(filename)
 
     def load_from_file(self, file_name):
         self.communicator.get_job_from_file(file_name)
@@ -78,7 +72,6 @@ class DefaultJobQueue(Switchable):
         return 0
 
     def graceful_shutdown(self):
-        self.my_thread.graceful_shutdown()
         self.graceful_shutdown_jobs()
 
     def graceful_shutdown_jobs(self):

@@ -8,15 +8,18 @@ from job_queue import JobQueueInterface
 from common.signalling import signal_all_setup
 from common.signalslot import Signal
 import threading
+from common.singleton import Singleton
 
 
 class Pilot(threading.Thread):
+    __metaclass__ = Singleton
     argv = []
     unresolved_arguments = []
     argument_parser = None
     user_agent = 'Pilot/2.0'
     args = None
     log = None
+    queue_config = None
     node = None
     ready = Signal()
 
@@ -144,6 +147,7 @@ class Pilot(threading.Thread):
     def run(self):
         self.print_initial_information()
         self.node.print_info()
+        self.queue_config = self.queue.get_queue_config(self.args.queuedata)
 
         if self.args.job_description:
             try:
@@ -152,12 +156,7 @@ class Pilot(threading.Thread):
                 self.log.warn("Loading job from file '%s' failed:" % self.args.job_description)
                 self.log.warn(e.message)
 
-        self.ready.connect(self.get_emmitter)
-        self.ready.async()
-
-    def get_emmitter(self):
-        self.log.info("got emmitter:")
-        self.log.info(Signal.emitter())
+        self.ready()
 
     def signal_receiver(self, sig, frame):
         from common.signalling import signals_reverse

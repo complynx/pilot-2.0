@@ -7,6 +7,7 @@ import threading
 from weakref import WeakSet, WeakKeyDictionary
 import logging
 import os
+from exception_formatter import caught
 
 DEBUG = True
 
@@ -25,14 +26,21 @@ class SignalDispatcher(threading.Thread):
         del frame
 
     def run(self):
-        self.dispatch_async_signal(*self.args, **self.kwargs)
+        try:
+            self.dispatch_async_signal(*self.args, **self.kwargs)
+        except Exception as e:
+            caught(e)
 
 
 class Signal(object):
-    def __init__(self):
+    def __init__(self, emmitter=None):
         self._functions = WeakSet()
         self._methods = WeakKeyDictionary()
         self._slots_lk = threading.RLock()
+        self.__emmitter = emmitter
+
+    def set_emmitter(self, emmitter=None):
+        self.__emmitter = emmitter
 
     def connect(self, slot):
         """
@@ -76,10 +84,15 @@ class Signal(object):
         frame = inspect.currentframe()
         outer = inspect.getouterframes(frame)
         call_frame = None
+        self = None  # type: Signal
         for i in outer:
             if i[3] == '__call__' and 'self' in i[0].f_locals and isinstance(i[0].f_locals['self'], Signal):
+                self = i[0].f_locals['self']
                 call_frame = i[0]
                 break
+
+        if self and self.__emmitter:
+            return self.__emmitter
 
         del frame
         del outer
