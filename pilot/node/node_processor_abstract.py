@@ -49,7 +49,7 @@ class NodeProcessorAbstract(SwitchableWithSignals):
     test_slots = request_slots
 
     def slot_finished(self):
-        slot = Signal.emitter()
+        slot = Signal.emitted().emmitter
         self.reserved_slots.remove(slot)
         self.test_slots()
 

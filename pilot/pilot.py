@@ -9,6 +9,7 @@ from common.signalling import signal_all_setup
 from common.signalslot import Signal
 import threading
 from common.singleton import Singleton
+from common.exception_formatter import caught
 
 
 class Pilot(threading.Thread):
@@ -24,7 +25,7 @@ class Pilot(threading.Thread):
     ready = Signal()
 
     def __init__(self, argv):
-        super(Pilot, self).__init__()
+        super(Pilot, self).__init__(name='pilot')
         import __main__
         import platform
 
@@ -145,18 +146,25 @@ class Pilot(threading.Thread):
             self.log.setLevel(getattr(logging, self.args.loglevel))
 
     def run(self):
-        self.print_initial_information()
-        self.node.print_info()
-        self.queue_config = self.queue.get_queue_config(self.args.queuedata)
+        try:
+            self.print_initial_information()
+            self.node.print_info()
+            self.queue_config = self.queue.get_queue_config(self.args.queuedata)
 
-        if self.args.job_description:
-            try:
+            if self.args.job_description:
                 self.queue.load_from_file(self.args.job_description)
-            except Exception as e:
-                self.log.warn("Loading job from file '%s' failed:" % self.args.job_description)
-                self.log.warn(e.message)
 
-        self.ready()
+            self.ready()
+        except Exception as e:
+            caught(e)
+
+        s = Signal()
+        s.name = "testsignal"
+        s.connect(self.throw)
+        s.async()
+
+    def throw(self):
+        tuple()[2]
 
     def signal_receiver(self, sig, frame):
         from common.signalling import signals_reverse

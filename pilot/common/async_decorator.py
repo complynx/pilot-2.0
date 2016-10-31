@@ -1,5 +1,7 @@
 import threading
 from exception_formatter import caught
+from functools import wraps
+import logging
 
 
 class TimeoutError(RuntimeError):
@@ -18,7 +20,12 @@ class AsyncCall(threading.Thread):
         self.daemon = daemon
 
     def __call__(self, *args, **kwargs):
-        self.name = self.Callable.__name__
+        func = self.Callable
+        self.name = "%s:%d:%s" % (func.func_globals["__name__"], func.func_code.co_firstlineno, func.__name__)
+
+        current = threading.currentThread()
+        self.parent = (current.getName(), current.ident)
+
         self.args = args
         self.kwargs = kwargs
         self.start()
@@ -32,6 +39,8 @@ class AsyncCall(threading.Thread):
             return self.Result
 
     def run(self):
+        logging.debug("Thread: %s(%d), called from: %s(%d)" % (self.getName(), self.ident,
+                                                               self.parent[0], self.parent[1]))
         try:
             self.Result = self.Callable(*self.args, **self.kwargs)
             if self.Callback:
@@ -46,6 +55,7 @@ def async(fnc=None, callback=None, daemon=False):
             return async(fnc1, callback, daemon)
         return add_async_callback
     else:
+        @wraps(fnc)
         def async_caller(*args, **kwargs):
             return AsyncCall(fnc, callback, daemon)(*args, **kwargs)
         return async_caller

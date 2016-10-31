@@ -2,6 +2,7 @@ from common.switchable_sig import SwitchableWithSignals
 from common.signalslot import Signal
 from common.async_decorator import async
 import logging
+import time
 
 
 class JobManagerDefault(SwitchableWithSignals):
@@ -82,6 +83,7 @@ class JobManagerDefault(SwitchableWithSignals):
         """
         if value != self.__state:
             self.log.info("Setting job state of job %s to %s" % (self.id, value))
+            time.sleep(1)
             self.__state = value
             self.state_changed.async(self.interface)
 

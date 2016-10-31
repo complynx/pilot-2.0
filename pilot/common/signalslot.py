@@ -14,33 +14,32 @@ DEBUG = True
 
 class SignalDispatcher(threading.Thread):
     def __init__(self, sig, args, kwargs):
-        super(SignalDispatcher, self).__init__()
+        super(SignalDispatcher, self).__init__(name=sig.name)
         self.dispatch_async_signal = sig
         self.args = args
         self.kwargs = kwargs
 
-        frame = inspect.currentframe()
-        outer = inspect.getouterframes(frame)
-        self.emmitter = Signal.emmitter_object(outer[2][0])
-        del outer
-        del frame
+        self.emmitter = sig.emmitter
+        current = threading.currentThread()
+        self.parent = (current.getName(), current.ident)
 
     def run(self):
+        logging.debug("Thread: %s(%d), called from: %s(%d)" % (self.getName(), self.ident,
+                                                               self.parent[0], self.parent[1]))
         try:
-            self.dispatch_async_signal(*self.args, **self.kwargs)
+            self.dispatch_async_signal._just_call(*self.args, **self.kwargs)
         except Exception as e:
             caught(e)
 
 
 class Signal(object):
+    name = "BasicSignal"
+
     def __init__(self, emmitter=None):
         self._functions = WeakSet()
         self._methods = WeakKeyDictionary()
         self._slots_lk = threading.RLock()
-        self.__emmitter = emmitter
-
-    def set_emmitter(self, emmitter=None):
-        self.__emmitter = emmitter
+        self.emmitter = emmitter
 
     def connect(self, slot):
         """
@@ -80,44 +79,23 @@ class Signal(object):
                     self._functions.remove(slot)
 
     @staticmethod
-    def emitter():
+    def emitted():
         frame = inspect.currentframe()
         outer = inspect.getouterframes(frame)
-        call_frame = None
         self = None  # type: Signal
         for i in outer:
-            if i[3] == '__call__' and 'self' in i[0].f_locals and isinstance(i[0].f_locals['self'], Signal):
+            if 'self' in i[0].f_locals and isinstance(i[0].f_locals['self'], Signal):
                 self = i[0].f_locals['self']
-                call_frame = i[0]
                 break
-
-        if self and self.__emmitter:
-            return self.__emmitter
 
         del frame
         del outer
-        return Signal.emmitter_object(call_frame)
-
-    @staticmethod
-    def emmitter_object(call_frame):
-        outer = inspect.getouterframes(call_frame)
-        outer = outer[1][0]
-        if len(outer.f_locals) == 0:
-            return None
-
-        obj = outer.f_locals[outer.f_locals.keys()[0]]
-        del call_frame
-        del outer
-
-        if isinstance(obj, SignalDispatcher):
-            return obj.emmitter
-
-        return obj
+        return self
 
     def debug_frame_message(self):
         if not DEBUG:
             return
-        log = logging.getLogger('Signal')
+        log = logging.getLogger(self.name)
         frame = inspect.currentframe()
         outer = inspect.getouterframes(frame)
         signal_frame = outer[2]
@@ -133,10 +111,12 @@ class Signal(object):
         SignalDispatcher(self, args, kwargs).start()
 
     def __call__(self, *args, **kwargs):
+        self.debug_frame_message()
+        self._just_call(*args, **kwargs)
+
+    def _just_call(self, *args, **kwargs):
         with self._slots_lk:
             # Call handler functions
-            self.debug_frame_message()
-
             for func in self._functions:
                 func(*args, **kwargs)
 
