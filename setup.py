@@ -93,5 +93,5 @@ setup(
     entry_points={},
 
     # In which package is the test suite
-    test_suite='pilot.tests'
+    test_suite='tests'
 )
