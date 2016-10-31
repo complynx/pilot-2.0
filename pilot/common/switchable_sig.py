@@ -15,7 +15,7 @@ class SwitchableWithSignals(Switchable):
         for i in dir(self):
             val = getattr(self, i)
             if isinstance(val, Signal):
-                val.emmitter = self.interface
+                val.emitter = self.interface
                 val.name = self.interface.__class__.__name__ + "." + i
 
     def copy_previous(self, previous):

@@ -13,6 +13,17 @@ from common.exception_formatter import caught
 
 
 class Pilot(threading.Thread):
+    """
+    Main class, singleton.
+
+    Sets up all the system, then runs the pilot.
+    Maybe, there will be a loop in the future, thus separate thread.
+
+    Holds all the pilot-related variables.
+    Introducing a new variable, remember about god-class antipattern.
+
+    :var (NodeProcessorAbstract) node:
+    """
     __metaclass__ = Singleton
     argv = []
     unresolved_arguments = []
@@ -24,8 +35,14 @@ class Pilot(threading.Thread):
     node = None
     ready = Signal()
 
-    def __init__(self, argv):
-        super(Pilot, self).__init__(name='pilot')
+    def __init__(self, argv=sys.argv):
+        """
+        Sets up a pilot according to the passed arguments, creates worker classes, sets up the name, the machine and
+        else. Establishes the connection between base classes.
+
+        :param argv: essentially the same as sys.argv
+        """
+        super(Pilot, self).__init__(name='Pilot-main')
         import __main__
         import platform
 
@@ -61,8 +78,7 @@ class Pilot(threading.Thread):
 
     def print_initial_information(self):
         """
-        Pilot is initialized somehow, this initialization needs to be print out for information.
-        :return:
+        Pilot is initialized somehow, this initialization needs to be print out for debugging and identification.
         """
         log = self.log
         if self.args is not None:
@@ -74,6 +90,10 @@ class Pilot(threading.Thread):
         log.info("Current working directory is %s" % os.getcwd())
 
     def userproxy_file_standard_path(self):
+        """
+        Tries to get X509 user proxy file path.
+        :return str: user proxy file or None
+        """
         base = None
         try:
             base = '/tmp/x509up_u%s' % str(os.getuid())
@@ -84,6 +104,10 @@ class Pilot(threading.Thread):
         return os.environ.get('X509_USER_PROXY', base)
 
     def setup_argparser(self):
+        """
+        Sets up arguments parser variables. These are common for all the pilot instances and share the same interface.
+        The specific configuration must be done in the scope of these parameters and the configuration files.
+        """
         qdata = os.path.join(self.startup_dir, "queuedata.json")
         qdata = qdata if os.path.isfile(qdata) else None
         import logging.config
@@ -139,6 +163,9 @@ class Pilot(threading.Thread):
                                           help="Disable rucio, just simulate")
 
     def setup_arguments(self):
+        """
+        Parses arguments according the argument parser, overrides logging level.
+        """
         self.args, self.unresolved_arguments = self.argument_parser.parse_known_args(self.argv[1:])
         if len(self.unresolved_arguments):
             self.log.warn("Found unresolved arguments: " + " ".join(pipes.quote(x) for x in self.unresolved_arguments))
@@ -146,6 +173,13 @@ class Pilot(threading.Thread):
             self.log.setLevel(getattr(logging, self.args.loglevel))
 
     def run(self):
+        """
+        Starts the main loop:
+            1. Print info
+            2. Get queue
+            4. If has saved jobs, start them first
+            3. Start job processing loop
+        """
         try:
             self.print_initial_information()
             self.node.print_info()
@@ -158,14 +192,14 @@ class Pilot(threading.Thread):
         except Exception as e:
             caught(e)
 
-        s = Signal()
-        s.name = "testsignal"
-        s.connect(self.throw)
-        s.async()
-
-    def throw(self):
-        tuple()[2]
-
     def signal_receiver(self, sig, frame):
+        """
+        Catches signal. This one just receives it and logs.
+        All signal handling must be done in other places.
+        For the parameter specifics see `signal.signal()`
+
+        :param sig: Signal number.
+        :param frame: Stack frame that caught the signal.
+        """
         from common.signalling import signals_reverse
         self.log.warn("received signal " + signals_reverse[sig])

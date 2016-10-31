@@ -7,4 +7,5 @@ class JobQueueInterface(Interface):
     __metaclass__ = Singleton
 
     def __init__(self):
+        # type: () -> DefaultJobQueue
         Interface.__init__(self, DefaultJobQueue)

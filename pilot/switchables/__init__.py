@@ -8,7 +8,7 @@ import binascii
 import imp
 import sys
 import inspect
-import weakref
+# import weakref
 import logging  # NOQA: F401 -- if commented debug
 import types
 
@@ -26,27 +26,6 @@ def module_name_from_file(file_name):
     m.update(name)
     module_name = binascii.hexlify(m.digest())
     return file_module_prefix + module_name
-
-
-class InterfaceMethod(object):
-    """
-    Class to wrap methods if needed to pass somewhere as callbacks.
-    """
-    def __init__(self, interface, name):
-        self.interface = weakref.ref(interface)
-        self.name = name
-
-    @property
-    def __self__(self):
-        return self.interface()
-
-    @property
-    def __func__(self):
-        return self.__call__.__func__
-
-    def __call__(self, *args, **kwargs):
-        comp = object.__getattribute__(self.interface(), "__switchable__component__")
-        return getattr(comp, self.name)(*args, **kwargs)
 
 
 class Switchable(object):
@@ -255,6 +234,11 @@ class Interface(object):
             cls.__switchable__default_class__ = new_class
 
     def __repr__(self):
+        """
+        Representation transfer.
+
+        :return: Current representation of the class.
+        """
         return object.__getattribute__(self, "__switchable__component__").__repr__()
 
     def switchable_set_default_class(self, new_class=None):
@@ -322,15 +306,6 @@ class Interface(object):
         """
         other_cls = object.__getattribute__(other_interface, "__switchable__component__").__class__
         self.__switch__(other_cls)
-
-    def switchable_get_method(self, name):
-        """
-        Create a method wrapper to be used in callbacks.
-
-        :param name: the name of the method
-        :return:
-        """
-        return InterfaceMethod(self, name)
 
     def __switchable__import_module_or_file__(self, name, package='.', **_):
         """
@@ -426,6 +401,7 @@ class Interface(object):
             # logging.getLogger('switchables').debug('Creating method %s::%s' % (self.__class__.__name__, name))
 
             def interface_method(interface, *args, **kwargs):
+                # TODO: research weakrefs for this case
                 # logging.getLogger('switchables').debug('Calling method %s::%s' % (self.__class__.__name__, name))
                 return getattr(object.__getattribute__(interface, "__switchable__component__"), name)(*args, **kwargs)
 

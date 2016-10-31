@@ -4,4 +4,5 @@ from switchables import Interface
 
 class JobManagerInterface(Interface):
     def __init__(self):
+        # type: () -> JobManagerDefault
         Interface.__init__(self, JobManagerDefault)

@@ -19,7 +19,7 @@ class SignalDispatcher(threading.Thread):
         self.args = args
         self.kwargs = kwargs
 
-        self.emmitter = sig.emmitter
+        self.emitter = sig.emitter
         current = threading.currentThread()
         self.parent = (current.getName(), current.ident)
 
@@ -33,17 +33,38 @@ class SignalDispatcher(threading.Thread):
 
 
 class Signal(object):
+    """
+    This class provides Signal-Slot pattern from Qt to python.
+
+    To create a signal, just make a `sig = Signal` and set up an emitter of it. Or create it with
+    `sig = Signal(emitter=foo)`.
+
+    To emit it, just call your `sig()`.
+    Or emit it in asynchronous mode: `sig.async()`.
+
+    To connect slots to it, pass callbacks into `sig.connect`. The connections are maintained through weakrefs, thus
+    you don't need to search for them and disconnect whenever you're up to destroy some object.
+    """
     name = "BasicSignal"
 
-    def __init__(self, emmitter=None):
+    def __init__(self, emitter=None, docstring=None):
+        """
+        Creates a Signal class with no connections.
+
+        :param emitter: Any object or anything, that is bound to a signal
+        :param (basestring) docstring: if necessary, you may provide a docstring for this signal instead of the default
+                                       one.
+        """
         self._functions = WeakSet()
         self._methods = WeakKeyDictionary()
         self._slots_lk = threading.RLock()
-        self.emmitter = emmitter
+        self.emitter = emitter  # TODO: Make this weakref
+        if isinstance(docstring, basestring):
+            self.__doc__ = docstring
 
     def connect(self, slot):
         """
-        Connect a callback ``slot`` to this signal.
+        Connect a callback ``slot`` to this signal if it is not connected already.
         """
         with self._slots_lk:
             if not self.is_connected(slot):
@@ -80,6 +101,13 @@ class Signal(object):
 
     @staticmethod
     def emitted():
+        """
+        As the signal may provide emitter and other stuff related, this function gets the signal that was emitted.
+
+        Note! Uses inspect.
+
+        :return Signal:
+        """
         frame = inspect.currentframe()
         outer = inspect.getouterframes(frame)
         self = None  # type: Signal

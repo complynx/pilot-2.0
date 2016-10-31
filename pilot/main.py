@@ -17,7 +17,7 @@ def debug_stack_threading():
     This is debugging thread.
 
     It will print stack traces of all the frames in the program every 1000'th second.
-    If something dead-locked or cycled round, you'll see.
+    If something dead-locked or cycled round, you'll see from it.
     """
     while True:
         time.sleep(1000)
@@ -34,7 +34,7 @@ def debug_stack_threading():
 
 if __name__ == "__main__":
     try:
-        pilot = Pilot(sys.argv)
+        pilot = Pilot()
         debug_stack_threading()
         pilot.start()
         pilot.join()

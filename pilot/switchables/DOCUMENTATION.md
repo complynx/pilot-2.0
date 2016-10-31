@@ -187,8 +187,10 @@ class MyImplementation(Switchable):
 
 class MyInterface(Interface):
     def __init__(self):
+        # type: () -> MyImplementation
         Interface.__init__(self, MyImplementation)
 ```
+*Note the type hint, it will save you time in PyCharm and others* 
 And in case of a separated abstract class:
 ```python
 from switchables import Switchable, Interface
@@ -201,8 +203,10 @@ class MyImplementation(MyAbstract):
 
 class MyInterface(Interface):
     def __init__(self):
+        # type: () -> MyAbstract
         Interface.__init__(self, MyImplementation, MyAbstract)
 ```
+*Note the type hint again* 
 Then any other implementation will inherit from abstract:
 ```python
 from my_default import MyAbstract
@@ -282,11 +286,13 @@ from switchables import Interface
 
 class MyComponentInterface(Interface):
     def __init__(self):
+        # type: () -> MyComponentAbstract
         Interface.__init__(self, MyComponentDefault, MyComponentAbstract)
 ```
 Then it will be more clean in later imports, and more convenient in
 terms. `__init__` is, as it has to be, an initializer and a presenter of
 an interface, and other files are the implementations.
+Also, note the type hint. Please, make sure, you've added this into.
 
 
 Common misuses
