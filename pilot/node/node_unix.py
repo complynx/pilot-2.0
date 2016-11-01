@@ -1,10 +1,10 @@
-import node_processor_abstract
+import node_abstract
 import os
 import pipes
 import string
 
 
-class NodeProcessorBasic(node_processor_abstract.NodeProcessorAbstract):
+class NodeProcessorBasic(node_abstract.NodeAbstract):
     """
     Basic node-related worker class.
 
@@ -17,12 +17,12 @@ class NodeProcessorBasic(node_processor_abstract.NodeProcessorAbstract):
     """
     def __init__(self, interface, previous=None):
         """
-        Initializes the node processor bypassing the NodeProcessorAbstract's `__init__`, but otherwise a common init for
+        Initializes the node processor bypassing the NodeAbstract's `__init__`, but otherwise a common init for
         `SwitchableWithSignals`.
 
         Params resemble those of `SwitchableWithSignals`.
         """
-        node_processor_abstract.SwitchableWithSignals.__init__(self, interface, previous)
+        node_abstract.SwitchableWithSignals.__init__(self, interface, previous)
 
     def get_cpu(self):
         """
@@ -30,7 +30,7 @@ class NodeProcessorBasic(node_processor_abstract.NodeProcessorAbstract):
 
         Returns only a clock of first core from "/proc/cpuinfo".
 
-        Overwrites that from NodeProcessorAbstract.
+        Overwrites that from NodeAbstract.
         :return float:
         """
         with open("/proc/cpuinfo", "r") as fd:
@@ -46,7 +46,7 @@ class NodeProcessorBasic(node_processor_abstract.NodeProcessorAbstract):
 
         Basically, just counts present "cpu MHz:" lines in "/proc/cpuinfo".
 
-        Overwrites that from NodeProcessorAbstract.
+        Overwrites that from NodeAbstract.
         :return int:
         """
         with open("/proc/cpuinfo", "r") as fd:
@@ -61,7 +61,7 @@ class NodeProcessorBasic(node_processor_abstract.NodeProcessorAbstract):
         """
         Returns total RAM in MB.
 
-        Overwrites that from NodeProcessorAbstract.
+        Overwrites that from NodeAbstract.
         :return float:
         """
         with open("/proc/meminfo", "r") as fd:
@@ -78,7 +78,7 @@ class NodeProcessorBasic(node_processor_abstract.NodeProcessorAbstract):
 
         If no path provided, returns the disk space of current working directory.
 
-        Overwrites that from NodeProcessorAbstract.
+        Overwrites that from NodeAbstract.
         :param (basestring) path:
         :return float:
         """

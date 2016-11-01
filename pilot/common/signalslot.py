@@ -6,14 +6,24 @@ import inspect
 import threading
 from weakref import WeakSet, WeakKeyDictionary
 import logging
-import os
 from exception_formatter import caught
 
 DEBUG = True
 
 
 class SignalDispatcher(threading.Thread):
+    """
+    A thread to dispatch a signal if it is emitted in asynchronous mode.
+
+    Like in `async` decorator, here the thread gets the info about it's parent thread and logs it up.
+    """
     def __init__(self, sig, args, kwargs):
+        """
+        Sets up necessary parameters like thread name, it's parent's name and id, emitter...
+        :param (Signal) sig: signal reference
+        :param args: arguments of the signal call
+        :param kwargs: KV arguments of the signal call
+        """
         super(SignalDispatcher, self).__init__(name=sig.name)
         self.dispatch_async_signal = sig
         self.args = args
@@ -24,6 +34,12 @@ class SignalDispatcher(threading.Thread):
         self.parent = (current.getName(), current.ident)
 
     def run(self):
+        """
+        Thread entry point.
+        Logs the thread ancestry.
+        Starts the signal.
+        Logs exceptions if necessary.
+        """
         logging.debug("Thread: %s(%d), called from: %s(%d)" % (self.getName(), self.ident,
                                                                self.parent[0], self.parent[1]))
         try:
@@ -90,7 +106,7 @@ class Signal(object):
 
     def disconnect(self, slot):
         """
-        Disconnect a slot from a signal if it is connected else do nothing.
+        Disconnect a ``slot`` from a signal if it is connected else do nothing.
         """
         with self._slots_lk:
             if self.is_connected(slot):
@@ -121,26 +137,44 @@ class Signal(object):
         return self
 
     def debug_frame_message(self):
+        """
+        Outputs a name and a line on which a signal was caught. Debug info.
+        """
         if not DEBUG:
             return
-        log = logging.getLogger(self.name)
+        logger = logging.getLogger("Signal")
         frame = inspect.currentframe()
         outer = inspect.getouterframes(frame)
         signal_frame = outer[2]
         try:
-            log.debug("%s:%d %s" % (os.path.basename(signal_frame[1]), signal_frame[2], signal_frame[4][0].strip()))
+            logger.handle(logger.makeRecord(logger.name, logging.DEBUG, signal_frame[1], signal_frame[2],
+                                            signal_frame[4][0].strip() + " -> " + self.name, (), None, "emit"))
         finally:
             del signal_frame
             del outer
             del frame
 
     def async(self, *args, **kwargs):
+        """
+        Emits the signal in the asynchronous mode. Arguments are passed to the callbacks.
+
+        Variadic.
+        :return SignalDispatcher:
+        """
         self.debug_frame_message()
-        SignalDispatcher(self, args, kwargs).start()
+        sd = SignalDispatcher(self, args, kwargs)
+        sd.start()
+        return sd
 
     def __call__(self, *args, **kwargs):
+        """
+        Emits the signal in the synchronous mode. Arguments are passed to the callbacks.
+
+        Variadic, Reentrant.
+        """
         self.debug_frame_message()
         self._just_call(*args, **kwargs)
+        return self
 
     def _just_call(self, *args, **kwargs):
         with self._slots_lk:

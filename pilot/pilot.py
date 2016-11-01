@@ -3,7 +3,7 @@ import os
 import argparse
 import pipes
 import logging
-from node import NodeProcessorInterface
+from node import NodeInterface
 from job_queue import JobQueueInterface
 from common.signalling import signal_all_setup
 from common.signalslot import Signal
@@ -47,7 +47,7 @@ class Pilot(threading.Thread):
         import platform
 
         self.argv = argv
-        self.node = NodeProcessorInterface()
+        self.node = NodeInterface()
         self.queue = JobQueueInterface()
 
         self.startup_dir = os.path.abspath(os.getcwd())

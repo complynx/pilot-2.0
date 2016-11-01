@@ -6,12 +6,23 @@ import time
 
 
 class JobManagerDefault(SwitchableWithSignals):
+    """
+    This is job manager class, responsible for experiment-specific methods.
+
+    It holds job description and provides a way to get it's properties.
+    """
     definition = None
     communicator = None
     queue = None
-    state_changed = Signal()
-    started = Signal()
-    finished = Signal()
+    state_changed = Signal(docstring="""
+    Fired on each state change.
+    """)
+    started = Signal(docstring="""
+    Fired when job starts (before the stage-in).
+    """)
+    finished = Signal(docstring="""
+    Fired when job finishes, and all the files are sent to the server.
+    """)
     log = logging.getLogger('job.class')
     __definition_aliases = {
         'id': 'job_id'
@@ -53,6 +64,11 @@ class JobManagerDefault(SwitchableWithSignals):
             object.__setattr__(self, key, value)
 
     def setup(self, definition, queue):
+        """
+        Installs the description, the queue and the job communicator for this job, installs the signals.
+        :param definition:
+        :param (DefaultJobQueue) queue:
+        """
         self.definition = definition
         self.log = logging.getLogger('job.%d' % self.id)
         self.queue = queue
@@ -61,10 +77,18 @@ class JobManagerDefault(SwitchableWithSignals):
         self.state_changed.connect(self.communicator.send_job_state)
 
     def got_state_from_server(self, state_info):
+        """
+        The receiver of the `send_job_state` from the server.
+        :param state_info:
+        """
         if self.id == state_info['job_id']:
             self.log.info(state_info)
 
     def __repr__(self):
+        """
+        String job representation.
+        :return str:
+        """
         return "<job.{job_id} ({label}) {home_package} ({state})>".format(state=self.state, **self.definition)
 
     @property
@@ -77,7 +101,7 @@ class JobManagerDefault(SwitchableWithSignals):
     @state.setter
     def state(self, value):
         """
-        Sets new state and updates server.
+        Sets new state and updates the server.
 
         :param value: new job state.
         """
@@ -89,13 +113,13 @@ class JobManagerDefault(SwitchableWithSignals):
 
     def stage_in(self):
         """
-        Stages in files using Rucio.
+        Stages in files.
         """
         self.state = 'stagein'
 
     def stage_out(self):
         """
-        Stages out files using Rucio.
+        Stages out files.
         """
         self.state = 'stageout'
         # self.prepare_log()
@@ -110,6 +134,9 @@ class JobManagerDefault(SwitchableWithSignals):
 
     @async
     def start(self):
+        """
+        Main loop. Does main steps.
+        """
         self.started.async()
         self.state = 'starting'
 

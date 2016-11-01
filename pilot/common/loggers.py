@@ -8,7 +8,15 @@ try:
 except AttributeError:
     # 2.6 workaround
     class NullHandler(logging.Handler):
+        """
+        Mutes the logging.
+
+        See python 2.7 docs on logging.NullHandler.
+        """
         def emit(self, record):
+            """
+            Mutes the logging.
+            """
             pass
 
     logging.NullHandler = NullHandler

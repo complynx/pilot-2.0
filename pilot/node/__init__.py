@@ -1,9 +1,9 @@
-from node_processor_abstract import NodeProcessorAbstract
+from node_abstract import NodeAbstract
 from switchables import Interface
 from common.singleton import Singleton
 
 
-class NodeProcessorInterface(Interface):
+class NodeInterface(Interface):
     """
     Interface to node-related functions, like slots, CPU, memory and other stuff.
 
@@ -12,9 +12,9 @@ class NodeProcessorInterface(Interface):
     __metaclass__ = Singleton
 
     def __init__(self):
-        # type: () -> NodeProcessorAbstract
+        # type: () -> NodeAbstract
         """
         As we have two different default classes, one of them is preferable but the other is "fallback", the behaviour
         is described in the abstract class, that then selects one of the used ones.
         """
-        Interface.__init__(self, NodeProcessorAbstract)
+        Interface.__init__(self, NodeAbstract)

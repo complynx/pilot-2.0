@@ -8,7 +8,7 @@ from common.async_decorator import async
 from slot_worker import SlotWorkerInterface
 
 
-class NodeProcessorAbstract(SwitchableWithSignals):
+class NodeAbstract(SwitchableWithSignals):
     """
     Abstract node-related worker class.
 
@@ -47,10 +47,10 @@ class NodeProcessorAbstract(SwitchableWithSignals):
         except ImportError:
             pass
         if have_basics:
-            interface.switchable_load('node_processor_basic')
+            interface.switchable_load('node_basic')
             return
         else:
-            interface.switchable_load('node_processor_unix')
+            interface.switchable_load('node_unix')
             return
 
     @async
@@ -108,7 +108,7 @@ class NodeProcessorAbstract(SwitchableWithSignals):
 
         In this case, sets up a name (and all the signals, as super suggests).
         """
-        super(NodeProcessorAbstract, self).init()
+        super(NodeAbstract, self).init()
         self.setup_name()
 
     def setup_name(self):
@@ -125,10 +125,10 @@ class NodeProcessorAbstract(SwitchableWithSignals):
         """
         Copies all preserved things from previous class if switched. And sets up node name.
 
-        :param (NodeProcessorAbstract) previous:
+        :param (NodeAbstract) previous:
         """
         self.setup_name()
-        super(NodeProcessorAbstract, self).copy_previous(previous)
+        super(NodeAbstract, self).copy_previous(previous)
         for i in ['jobs_count', 'jobs_limit', 'max_available_jobs', 'reserved_slots']:
             setattr(self, i, getattr(previous, i))
 

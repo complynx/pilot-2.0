@@ -1,9 +1,9 @@
-import node_processor_abstract
+import node_abstract
 import psutil
 import cpuinfo
 
 
-class NodeProcessorBasic(node_processor_abstract.NodeProcessorAbstract):
+class NodeBasic(node_abstract.NodeAbstract):
     """
     Basic node-related worker class.
 
@@ -16,18 +16,18 @@ class NodeProcessorBasic(node_processor_abstract.NodeProcessorAbstract):
     """
     def __init__(self, interface, previous=None):
         """
-        Initializes the node processor bypassing the NodeProcessorAbstract's `__init__`, but otherwise a common init for
+        Initializes the node processor bypassing the NodeAbstract's `__init__`, but otherwise a common init for
         `SwitchableWithSignals`.
 
         Params resemble those of `SwitchableWithSignals`.
         """
-        node_processor_abstract.SwitchableWithSignals.__init__(self, interface, previous)
+        node_abstract.SwitchableWithSignals.__init__(self, interface, previous)
 
     def get_cpu(self):
         """
         Returns CPU clock in MHz.
 
-        Overwrites that from NodeProcessorAbstract.
+        Overwrites that from NodeAbstract.
         Returns only a clock of the first core returned by `cpuinfo.get_cpu_info()`.
 
         :return float:
@@ -38,7 +38,7 @@ class NodeProcessorBasic(node_processor_abstract.NodeProcessorAbstract):
         """
         Returns overall available CPU core count.
 
-        Overwrites that from NodeProcessorAbstract.
+        Overwrites that from NodeAbstract.
         :return int:
         """
         return cpuinfo.get_cpu_info()['count']
@@ -47,7 +47,7 @@ class NodeProcessorBasic(node_processor_abstract.NodeProcessorAbstract):
         """
         Returns total RAM in MB.
 
-        Overwrites that from NodeProcessorAbstract.
+        Overwrites that from NodeAbstract.
         :return float:
         """
         return float(psutil.virtual_memory().total) / 1024. / 1024.
@@ -58,7 +58,7 @@ class NodeProcessorBasic(node_processor_abstract.NodeProcessorAbstract):
 
         If no path provided, returns the disk space of current working directory.
 
-        Overwrites that from NodeProcessorAbstract.
+        Overwrites that from NodeAbstract.
         :param (basestring) path:
         :return float:
         """

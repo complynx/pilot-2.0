@@ -1,4 +1,8 @@
 class Singleton(type):
+    """
+    Singleton metaclass.
+    Nothing special. See wikipedia if you don't know any of these.
+    """
     _instances = {}
 
     def __call__(cls, *args, **kwargs):  # NOQA N805: it is metaclass, so "cls", not "self".
