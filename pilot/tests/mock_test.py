@@ -12,3 +12,9 @@ class TestMock(TestCase):
         """ Assert that true is not false """
         self.assertTrue(True)
         self.assertFalse(False)
+
+    def test_fail(self):
+        """
+        This test demonstrates the issue with current testing system.
+        """
+        self.assertTrue(False)
