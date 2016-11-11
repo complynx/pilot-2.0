@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
-. ~/.bashrc_o
 
 lsetup python
+
+if [ ! -f /repo/.venv/bin/activate ];then
+    python /repo/tools/install_venv.py
+fi
+
+source /repo/.venv/bin/activate
