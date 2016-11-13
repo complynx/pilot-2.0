@@ -1,9 +1,8 @@
 Pilot2
 ======
-Master:
-.. image:: https://travis-ci.org/PanDAWMS/pilot-2.0.svg?branch=master
-Dev:
-.. image:: https://travis-ci.org/PanDAWMS/pilot-2.0.svg?branch=dev
+Master: .. image:: https://travis-ci.org/PanDAWMS/pilot-2.0.svg?branch=master
+
+Dev: .. image:: https://travis-ci.org/PanDAWMS/pilot-2.0.svg?branch=dev
 
 This is architecture version 2 of the pilot for the PanDA Workload Management
 system.
