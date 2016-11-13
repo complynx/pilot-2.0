@@ -1,5 +1,6 @@
 Pilot2
 ======
+.. image:: https://travis-ci.org/complynx/pilot-2.0.svg?branch=master
 
 This is architecture version 2 of the pilot for the PanDA Workload Management
 system.
