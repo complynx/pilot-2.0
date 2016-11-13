@@ -121,11 +121,21 @@ def install_deps(prefix=None, no_setup=False):
 
 
 if __name__ == "__main__":
-    import argparse
+    try:
+        import argparse
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--no_setup", action="store_true")
-    parser.add_argument("--prefix", default=None, type=lambda x: x if os.path.isdir(x) else None)
-    arg = parser.parse_args(sys.argv[1:])
+        parser = argparse.ArgumentParser()
+        parser.add_argument('-s', "--no_setup", action="store_true")
+        parser.add_argument('-p', "--prefix", default=None, type=lambda x: x if os.path.isdir(x) else None)
+        arg = parser.parse_args(sys.argv[1:])
+    except ImportError:
+        import optparse
+
+        parser = optparse.OptionParser()
+        parser.add_option('-s', "--no_setup", action="store_true")
+        parser.add_option('-p', "--prefix", default=None, type="string")
+        arg = parser.parse_args()
+        if arg.no_setup and not os.path.isdir(arg.no_setup):
+            arg.no_setup = None
 
     install_deps(arg.prefix, arg.no_setup)
