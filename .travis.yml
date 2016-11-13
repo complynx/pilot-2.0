@@ -8,11 +8,12 @@ services:
 
 before_install:
   - docker build -t complynx/pilot-test .
-  - docker run complynx/pilot-test bash -c "cd /repo; pip install tox; tools/install_venv.sh; tools/with_venv.sh pip install tox; tools/with_venv.sh tox"
+  - pip install flake8
 
 script:
-  - tools/with_venv.sh tox
+  - docker run complynx/pilot-test bash -c "source ~/.bashrc; nosetests -v --exclude=.venv --exclude=tools"
+  - flake8 .
 
 after_success:
-  - pip install coveralls
-- coveralls
+#  - pip install coveralls
+#  - coveralls
