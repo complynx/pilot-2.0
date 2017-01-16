@@ -640,6 +640,7 @@ def cli_setup():
 
     return args
 
+
 if __name__ == "__main__":
     env = cli_setup()
     cli_parse(env)

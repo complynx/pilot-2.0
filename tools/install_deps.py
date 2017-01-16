@@ -28,6 +28,7 @@ def has_module(mod):
     except ImportError:
         return False
 
+
 HAS_PIP = has_module('pip')
 HAS_SETUP = has_module('setuptools')
 

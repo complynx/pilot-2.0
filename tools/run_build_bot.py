@@ -298,6 +298,7 @@ def update_tests(merge_request, token):
         print 'Error while checking out master'
         sys.exit(-1)
 
+
 with PidFile(pid_file):
 
     root_git_dir = commands.getstatusoutput('git rev-parse --show-toplevel')[1]
