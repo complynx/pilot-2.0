@@ -175,10 +175,12 @@ class Pilot(threading.Thread):
     def run(self):
         """
         Starts the main loop:
-            1. Print info
-            2. Get queue
-            4. If has saved jobs, start them first
-            3. Start job processing loop
+
+        1. Print info
+        2. Get queue
+        3. If has saved jobs, start them first
+        4. Start job processing loop
+
         """
         try:
             self.print_initial_information()
@@ -196,9 +198,9 @@ class Pilot(threading.Thread):
         """
         Catches signal. This one just receives it and logs.
         All signal handling must be done in other places.
-        For the parameter specifics see `signal.signal()`
+        For the parameter specifics see `signal.signal`
 
-        :param sig: Signal number.
+        :param int sig: Signal number.
         :param frame: Stack frame that caught the signal.
         """
         from common.signalling import signals_reverse

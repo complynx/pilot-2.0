@@ -34,30 +34,31 @@ class Switchable(object):
     these two functions must have the same signature.
 
     To create a switchable class, just inherit from this and register it in the appropriate interface.
-    ```
-    import Switchable, Iterface from switchables
 
-    class ExampleClass(Switchable):
-        def __init__(self, interface, previous=None):
-            Switchable.__init__(self, interface, previous)
-            if previous:
-                ...fetch values from previous...
-            else:
-                ...init default values...
+    .. code-block:: python
 
-        def __switch__(self):
-            Switchable.__switch__(self)
-            ...serialize all...
+        import Switchable, Iterface from switchables
 
-        def __switched__(self):
-            Switchable.__switched__(self)
-            ...close unclosed descriptors...
+        class ExampleClass(Switchable):
+            def __init__(self, interface, previous=None):
+                Switchable.__init__(self, interface, previous)
+                if previous:
+                    ...fetch values from previous...
+                else:
+                    ...init default values...
 
-    # register it as follows
-    class ExampleInterface(Interface):
-        def __init__(self):
-            Interface.__init__(self, ExampleClass)
-    ```
+            def __switch__(self):
+                Switchable.__switch__(self)
+                ...serialize all...
+
+            def __switched__(self):
+                Switchable.__switched__(self)
+                ...close unclosed descriptors...
+
+        # register it as follows
+        class ExampleInterface(Interface):
+            def __init__(self):
+                Interface.__init__(self, ExampleClass)
 
     :prop interface: the pointer to the interface class of self
     """
@@ -88,9 +89,11 @@ class Switchable(object):
         serialize all it's internals into a unified way common for all the classes in this instance.
         For instance, it should end all specific connections, close all descriptors and update all the modified configs.
         It may live unclosed descriptors if
-            1) these descriptors are a part of a config and will be maintained either by user or by each and every
-               implementation
-            2) they are closed in `__switched__` of the same object.
+
+        1) these descriptors are a part of a config and will be maintained either by user or by each and every
+           implementation
+        2) they are closed in `__switched__` of the same object.
+
         After serialization this object will be passed to the initialization of a new class (it's `__init__`) as an
         argument.
 
@@ -106,7 +109,7 @@ class Switchable(object):
         descriptors, unlock semaphores and so on, if they haven't been passed to a new class.
 
         At this point the new class is working, this class is obsolete and removed. It may still persist while there
-        would be some lost hanging links, etc... Thus you shouldn't rely on `__del__`
+        would be some lost hanging links, etc... Thus you shouldn't rely on ``__del__``
         """
         pass
 
@@ -131,30 +134,32 @@ class Interface(object):
 
 
     To create a switchable class, just inherit from this and register it in the appropriate interface.
-    ```
-    import Switchable, Iterface from switchables
 
-    class ExampleClass(Switchable):
-        def __init__(self, interface, previous=None):
-            Switchable.__init__(self, interface, previous)
-            if previous:
-                ...fetch values from previous...
-            else:
-                ...init default values...
+    .. code-block:: python
 
-        def __switch__(self):
-            Switchable.__switch__(self)
-            ...serialize all...
+        import Switchable, Iterface from switchables
 
-        def __switched__(self):
-            Switchable.__switched__(self)
-            ...close unclosed descriptors...
+        class ExampleClass(Switchable):
+            def __init__(self, interface, previous=None):
+                Switchable.__init__(self, interface, previous)
+                if previous:
+                    ...fetch values from previous...
+                else:
+                    ...init default values...
 
-    # register it as follows
-    class ExampleInterface(Interface):
-        def __init__(self):
-            Interface.__init__(self, ExampleClass)
-    ```
+            def __switch__(self):
+                Switchable.__switch__(self)
+                ...serialize all...
+
+            def __switched__(self):
+                Switchable.__switched__(self)
+                ...close unclosed descriptors...
+
+        # register it as follows
+        class ExampleInterface(Interface):
+            def __init__(self):
+                Interface.__init__(self, ExampleClass)
+
     """
     __switchable__abstract_class__ = None
     __switchable__default_class__ = None
@@ -169,15 +174,17 @@ class Interface(object):
         class, and if needed, an abstract one (if there is one).
 
         Registering is done by three following lines:
-        ```
-        class ExampleInterface(Interface):
-            def __init__(self):
-                Interface.__init__(self, ExampleClass[, AbstractClass=ExampleClass])
-        ```
 
-        After registering with this method overloading, an `ExampleInterface` will initialize with `ExampleClass` as the
-        first class and on switch it will test the inheritance of classes from `AbstractClass`. If `AbstractClass` is
-        not defined, it is assumed to be the same as default one.
+        .. code-block:: python
+
+            class ExampleInterface(Interface):
+                def __init__(self):
+                    Interface.__init__(self, ExampleClass[, AbstractClass=ExampleClass])
+
+
+        After registering with this method overloading, an ``ExampleInterface`` will initialize with ``ExampleClass``
+        as the first class and on switch it will test the inheritance of classes from ``AbstractClass``. If
+        ``AbstractClass`` is not defined, it is assumed to be the same as default one.
 
         Note: You can change default class in the future, but abstract class will prevail. Though you still can access
         magic properties to change it.
@@ -212,15 +219,20 @@ class Interface(object):
         If new class is not inherited from abstract, no modifications occur.
 
         To diverge some instances from others, just spawn a new interface class like follows:
-        ```
-        class OtherExampleInterface(ExampleInterface):
-            pass
-        ```
-        This new `OtherExampleInterface` will have it's own default class setting, separated from `ExampleInterface`,
-        though they will resemble the same interface and the same level of abstraction, and will be able to exchange
-        classes with `cast` and `set_default_class`.
-        Note: newly created interface won't inherit current default class of `ExampleInterface`. To inherit, pass
-        `ExampleInterface` into the `switchable_set_default_class`.
+
+        .. code-block:: python
+
+            class OtherExampleInterface(ExampleInterface):
+                pass
+
+        This new ``OtherExampleInterface`` will have it's own default class setting, separated from
+        ``ExampleInterface``, though they will resemble the same interface and the same level of abstraction,
+        and will be able to exchange classes with ``cast`` and `set_default_class`.
+
+        .. Note::
+
+            newly created interface won't inherit current default class of ``ExampleInterface``. To inherit,
+            pass ``ExampleInterface`` into the `switchable_set_default_class`.
 
         :param new_class:
         """
@@ -335,35 +347,39 @@ class Interface(object):
     def switchable_load(self, *args, **kwargs):
         """
         Loads new (or already present) class from module or file, provided by string.
-        It tries first to use the string as a filename, then as a module name, then falls back to default.
+        It tries first to use the string as a filename, then as a module name, then falls back to
+        default.
         You can provide a set of strings at one time. It will iterate over the arguments.
 
         Example:
-        ```
-        from switchables.example_class import ExampleInterface
 
-        ex=ExampleInterface()
-        ex.switchable_load('/mnt/net_disk/mymodule.py', 'class1', 'class2')
-        ```
-        In this case it will try to load file, then try to load `switchables.class1`, then try to load
-        `switchables.class2`.
+        .. code-block:: python
+
+            from switchables.example_class import ExampleInterface
+
+            ex=ExampleInterface()
+            ex.switchable_load('/mnt/net_disk/mymodule.py', 'class1', 'class2')
+
+        In this case it will try to load file, then try to load ``switchables.class1``, then try to load
+        ``switchables.class2``.
         If file is loaded, the module loaded will be also relative to `switchables`.
 
-        Module name is prefixed the same way as an abstract class, so the module is always relative to it, as it was in
-        the same folder as an abstract class, even if loaded file is loaded from anywhere else.
+        Module name is prefixed the same way as an abstract class, so the module is always relative to it,
+        as it was in the same folder as an abstract class, even if loaded file is loaded from anywhere else.
 
-        To change prefix in the example above, provide named argument `base` with prefix.
+        To change prefix in the example above, provide named argument ``base`` with prefix.
         So, previous example will change to:
-        ```
-        ex.switchable_load('/mnt/net_disk/mymodule.py', 'class1', 'class2', package='myprefix')
-        ```
 
-        `package` is interpreted as magic variable `__package__` of every module. The only difference is the case of
-        `package='.'`, that is the default value if package is not provided. In this case '.' expands to the package of
-        the interface abstract class.
-        If `package=None` is passed, the package is assumed to be at the root level.
+        .. code-block:: python
 
-        If you have multiple implementations in one file/module, pass `skip=N` to select N+1'st one.
+            ex.switchable_load('/mnt/net_disk/mymodule.py', 'class1', 'class2', package='myprefix')
+
+        ``package`` is interpreted as magic variable ``__package__`` of every module. The only difference
+        is the case of ``package='.'``, that is the default value if package is not provided. In this case
+        ``'.'`` expands to the package of the interface abstract class.
+        If ``package=None`` is passed, the package is assumed to be at the root level.
+
+        If you have multiple implementations in one file/module, pass ``skip=N`` to select N+1'st one.
         """
         for i in args:
             if isinstance(i, str):
@@ -387,12 +403,12 @@ class Interface(object):
         One of two major elements of the interface. It provides transparent access to properties and methods of the
         underlying class. The getter.
 
-        So, call for `el.foo()` will result in lookup for `foo()` in a class loaded right now for interface `el`.
-        The same is for accessing property `el.bar`.
+        So, call for ``el.foo()`` will result in lookup for ``foo()`` in a class loaded right now for interface ``el``.
+        The same is for accessing property ``el.bar``.
 
         For more information, consult python docs.
 
-        :param name: name of property/method
+        :param str name: name of property/method
         :return: property/method from current loaded class
         """
         comp = object.__getattribute__(self, "__switchable__component__")
@@ -414,7 +430,8 @@ class Interface(object):
         Other of two major elements of the interface. It provides transparent access to properties and methods of the
         underlying class. This is setter.
 
-        While setting `el.bar = 'baz'`, it will search for `bar` in current class and will try to set it to 'baz'.
+        While setting ``el.bar = 'baz'``, it will search for ``bar`` in current class and will try to set it to
+        ``'baz'``.
 
         For more information, consult python docs.
 
@@ -430,12 +447,14 @@ class InterfaceShort(Interface):
     """
     This is an alias container class. If you don't need these methods in your interface, you might want to use this,
     it cuts a few letters for you.
-    ```
-    cast_default = switchable_to_default
-    load_module = switchable_load
-    cast_class = switchable_cast
-    set_default = switchable_set_default_class
-    ```
+
+    .. code-block:: python
+
+        cast_default = switchable_to_default
+        load_module = switchable_load
+        cast_class = switchable_cast
+        set_default = switchable_set_default_class
+
     You can also do it your way in any of your registration classes.
     """
     cast_default = Interface.switchable_to_default

@@ -176,7 +176,6 @@ class Pilot:
         """
         Main execution entrance point.
         :param argv: command line arguments
-        :return:
         """
         self.executable = argv[0]
         self.argv = argv
